@@ -8,13 +8,6 @@ namespace tec_parts_replenishment_transpor_web.Commons
 {
     public static class Const
     {
-        // エリア
-        public const int C_AREA_KUBUN = 1; // 1 組立課, 2 プレス課
-
-        public const string C_WORK_LIFT = "Lift"; 
-
-        public const string C_WORK_TAGNOVA= "TagNova";
-
         public static class Status
         {
             public const int C_PENDING_STATUS = 1;
