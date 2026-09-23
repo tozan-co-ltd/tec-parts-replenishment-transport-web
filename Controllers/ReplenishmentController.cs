@@ -19,7 +19,7 @@ namespace tec_parts_replenishment_transpor_web.Controllers
         }
 
         /// <summary>
-        /// 運搬画面表示
+        ///部品補充画面表示
         /// </summary>
         /// <returns></returns>
         public IActionResult Index()
@@ -28,7 +28,7 @@ namespace tec_parts_replenishment_transpor_web.Controllers
         }
 
         /// <summary>
-        /// 
+        /// 登録ボタンを押下した際の処理
         /// </summary>
         /// <param name="dataRestockStatusId"></param>
         /// <returns></returns>
@@ -53,7 +53,7 @@ namespace tec_parts_replenishment_transpor_web.Controllers
 
 
         /// <summary>
-        /// 
+        /// 部品補充ステータスを更新
         /// </summary>
         /// <param name="dataRestockStatusId"></param>
         /// <returns></returns>
@@ -83,7 +83,7 @@ namespace tec_parts_replenishment_transpor_web.Controllers
 
 
         /// <summary>
-        /// 
+        /// 部品補充キャンセルを登録
         /// </summary>
         /// <param name="dataRestockStatusId"></param>
         /// <returns></returns>
@@ -108,6 +108,12 @@ namespace tec_parts_replenishment_transpor_web.Controllers
         }
 
 
+        /// <summary>
+        /// 部品補充完了を登録
+        /// </summary>
+        /// <param name="dataRestockStatusId"></param>
+        /// <param name="statusBtn"></param>
+        /// <returns></returns>
         [HttpPost]
         public IActionResult RegisterForReplenishmentComplete(string dataRestockStatusId, string statusBtn)
         {
@@ -127,7 +133,12 @@ namespace tec_parts_replenishment_transpor_web.Controllers
             }
         }
 
-
+        /// <summary>
+        /// 部品補充完了ステータスを更新
+        /// </summary>
+        /// <param name="dataRestockStatusId"></param>
+        /// <param name="statusBtn"></param>
+        /// <returns></returns>
         public bool UpdateForReplenishmentComplete( int dataRestockStatusId, string statusBtn)
         {
             string? errorMessage;
