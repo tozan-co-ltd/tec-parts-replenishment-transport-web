@@ -1,4 +1,4 @@
-namespace tec_parts_supply_transport_web.Models
+namespace tec_parts_replenishment_transpor_web.Models
 {
     public class ErrorViewModel
     {

@@ -8,7 +8,7 @@
     }
   },
   "profiles": {
-    "tec_parts_supply_transport_web": {
+    "tec_parts_replenishment_transpor_web": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

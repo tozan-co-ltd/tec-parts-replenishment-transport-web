@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace tec_parts_supply_transport_web.Commons
+namespace tec_parts_replenishment_transpor_web.Commons
 {
     /// <summary>
     /// Cドライブ接続に関する関数

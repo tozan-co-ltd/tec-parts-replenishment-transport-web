@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
-using tec_parts_supply_transport_web.Models;
-using tec_parts_supply_transport_web.Repositories;
+using tec_parts_replenishment_transpor_web.Models;
+using tec_parts_replenishment_transpor_web.Repositories;
 
-namespace tec_parts_supply_transport_web.Commons
+namespace tec_parts_replenishment_transpor_web.Commons
 {
     /// <summary>
     /// 検証エラー処理に関する関数
@@ -29,7 +29,7 @@ namespace tec_parts_supply_transport_web.Commons
 
 #if DEBUG
                 // デバッグ
-                // ...\tec_parts_supply_transport_web\wwwroot\epss\
+                // ...\tec_parts_replenishment_transpor_web\wwwroot\epss\
                 var section = "developmentFolderPath";
                 var rootPath = Directory.GetCurrentDirectory();
                 var _folderPath = ConnectionCDriver.GetCDriverConnectionString(section, in_path, folder_name);

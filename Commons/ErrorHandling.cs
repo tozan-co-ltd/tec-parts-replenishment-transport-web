@@ -1,7 +1,7 @@
-﻿using tec_parts_supply_transport_web.Models;
-using tec_parts_supply_transport_web.Repositories;
+﻿using tec_parts_replenishment_transpor_web.Models;
+using tec_parts_replenishment_transpor_web.Repositories;
 
-namespace tec_parts_supply_transport_web.Commons
+namespace tec_parts_replenishment_transpor_web.Commons
 {
     /// <summary>
     /// エラー処理に関する関数

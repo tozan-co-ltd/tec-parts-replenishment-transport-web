@@ -1,4 +1,4 @@
-﻿namespace tec_parts_supply_transport_web.Commons
+﻿namespace tec_parts_replenishment_transpor_web.Commons
 {
     /// <summary>
     /// SQLServer接続に関する関数
@@ -11,7 +11,7 @@
         /// <returns></returns>
         public static string GetSQLServerConnectionString()
         {
-            var databaseName = "tec-empty-box-supply";
+            var databaseName = "tec-inventory-management";
             var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional: false);

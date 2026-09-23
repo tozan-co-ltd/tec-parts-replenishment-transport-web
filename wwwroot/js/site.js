@@ -7,38 +7,29 @@ var pathName = window.location.pathname.split('/');
 if (pathName.length > 2)
     baseUrl = baseUrl + "/" + pathName[1];
 
-// -----------------------------------準備画面-----------------------------------//
+// -----------------------------------部品補充運搬画面-----------------------------------//
 // SignalRを使用して接続を初期化する
-const isPreparationPage = document.getElementById("parts-page");
-if (isPreparationPage) {
-    var connectionSupply = new signalR.HubConnectionBuilder().withUrl("partsHub").build();
+const isReplenishment = document.getElementById("replenishment-page");
+if (isReplenishment) {
+    var connectionReplenishment = new signalR.HubConnectionBuilder().withUrl("replenishmentHub").build();
 
     $(function () {
-        connectionSupply.start().then(function () {
-            connectionSupply.invoke("JoinGroup", workType); 
-            InvokeSupplys();
+        connectionReplenishment.start().then(function () {
+            InvokeReplenishment();
         })
     });
 
-    connectionSupply.on("NotifyPartsChanged", function (type) {
-        if (type === workType) {
-            InvokeSupplys();
-        }
-    });
-
-
     // 短い遅延後に再接続を試みる
-    var closeConnectSupplyCount = 0;
-    connectionSupply.onclose(function (error) {
+    var closeConnectReplenishmentCount = 0;
+    connectionReplenishment.onclose(function (error) {
         setTimeout(function () {
-            connectionSupply.start().then(function () {
-                connectionSupply.invoke("JoinGroup", workType); 
-                InvokeSupplys();
-            });
-            closeConnectSupplyCount += 1;
-            console.log("Error - onclose 再接続" + closeConnectSupplyCount + "回目");
+            connectionReplenishment.start().then(function () {
+                InvokeReplenishment();
+            })
+            closeConnectReplenishmentCount += 1;
+            console.log("Error - onclose 再接続" + closeConnectReplenishmentCount + "回目");
             // 接続が2回以上失われた場合はページをリロード
-            if (closeConnectSupplyCount >= 2)
+            if (closeConnectReplenishmentCount >= 2)
                 window.location.reload();
         }, 500);
     });
@@ -46,40 +37,40 @@ if (isPreparationPage) {
     // ページを離れた時やリロードしたタイミングで接続を止める
     window.addEventListener('unload', function () {
         console.log("addEventListener - unload");
-        connectionSupply.stop();
+        connectionReplenishment.stop();
     });
 
+
     // ハブのメソッドを呼び出す
-    function InvokeSupplys() {
-        connectionSupply.invoke("SendParts", workType).catch(function (error) {
+    function InvokeReplenishment() {
+        connectionReplenishment.invoke("SendReplenishments").catch(function (error) {
             console.log("Error - invoke catch");
-            $(".connectionSupplyError").text(error);
-            $(".connectionSupplyError").show();
+            $(".connectionReplenishmentError").text(error);
+            $(".connectionReplenishmentError").show();
         });
     }
 
 
     // エラー発生時
-    connectionSupply.on("Error", (error) => {
+    connectionReplenishment.on("Error", (error) => {
         console.log("Error - on");
-        $(".connectionSupplyError").text(error);
-        $(".connectionSupplyError").show();
+        $(".connectionReplenishmentError").text(error);
+        $(".connectionReplenishmentError").show();
     });
 
 
     // グリッドに依頼をバインドする
-    connectionSupply.on("ReceivedSupplys", function (supplys) {
-        BindSupplysToGrid(supplys);
+    connectionReplenishment.on("ReceivedReplenishments", function (replenishments) {
+        BindReplenishmentToGrid(replenishments);
     });
 }
 
-// グリッドに依頼をバインドする
-function BindSupplysToGrid(supplys) {
-    $('#tblSupplyLeft tbody').empty();
-    $('#tblSupplyRight tbody').empty();
+function BindReplenishmentToGrid(replenishments) {
+    $('#tblReplenishmentLeft tbody').empty();
+    $('#tblReplenishmentRight tbody').empty();
 
-    var tableLeftDom = document.getElementById('tblSupplyLeft');
-    var tableRightDom = document.getElementById('tblSupplyRight');
+    var tableLeftDom = document.getElementById('tblReplenishmentLeft');
+    var tableRightDom = document.getElementById('tblReplenishmentRight');
 
     if (tableLeftDom !== null) {
         var table = tableLeftDom.getElementsByTagName('tbody')[0];
@@ -89,263 +80,186 @@ function BindSupplysToGrid(supplys) {
         const completedMachines = new Set();
 
         // 左のテーブル取得
-        var supplys1 = supplys.slice(0, 6);
-        createTable(supplys1, table);
+        var replenishments1 = replenishments.slice(0, 6);
+        createTable(replenishments1, table);
 
         // 右のテーブル取得
-        var supplysTmp = supplys.length - supplys1.length;
-        if (supplysTmp > 0) {
-            var supplys2 = supplys.slice(6, 12);
-            createTable(supplys2, table1);
+        var replenishmentsTmp = replenishments.length - replenishments1.length;
+        if (replenishmentsTmp > 0) {
+            var replenishments2 = replenishments.slice(6, 12);
+            createTable(replenishments2, table1);
         }
 
         // テーブルを作成
-        function createTable(supplys, table) {
-            if (supplys.length > 0) {
-                $(".supplyContent").show();
+        function createTable(replenishments, table) {
+            if (replenishments.length > 0) {
+                $(".replenishmentContent").show();
                 $(".noneDateMess").hide();
 
-                for (let i = 0; i < supplys.length; i++) {
+                for (let i = 0; i < replenishments.length; i++) {
                     var row = table.insertRow();
                     var cell1 = row.insertCell(0);
                     var cell2 = row.insertCell(1);
                     var cell3 = row.insertCell(2);
                     var cell4 = row.insertCell(3);
                     var cell5 = row.insertCell(4);
-                    var cell6 = row.insertCell(5);
-                    var cell7 = row.insertCell(6);
-                    var cell8 = row.insertCell(7);
-                    var cell9 = row.insertCell(8);
-                    var cell10 = row.insertCell(9);
 
-                    // 現在日時
-                    var today = new Date();
-                    // 依頼時間
-                    var resDateTime = new Date(supplys[i].correctedRequestDatetime);
-                    var elapsedMs = today - resDateTime; // 過ぎました時間
-                    var countdownMs = supplys[i].countDownTime * 60000; // カウント時間
-                    var remainingMs = countdownMs - elapsedMs; // 残り時間
-                    var dataTime = elapsedMs; // 経過時間
-                    var subResult;
+                    cell1.innerHTML = `${replenishments[i].partsNum}`;
+                    cell1.className = 'parts_num';
 
-                    // 時間表示
-                    if (elapsedMs >= 60 * 60000) { // 1時間経過した場合、表示を「59:59」で固定
-                        subResult = "59:59";
-                    } else if (remainingMs > 0) {　// カウントダウン中（残り時間がまだある）
-                        const minutes = Math.floor(remainingMs / 60000);
-                        const seconds = Math.floor((remainingMs % 60000) / 1000);
-                        subResult = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    } else {　// カウントアップ中（カウントダウン終了後の経過時間を表示）
-                        const totalMinutes = supplys[i].countDownTime + Math.floor((elapsedMs - countdownMs) / 60000);
-                        const seconds = Math.floor((elapsedMs % 60000) / 1000);
-                        const displayMinutes = Math.min(totalMinutes, 59);
-                        subResult = `${displayMinutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    cell2.innerHTML = `${replenishments[i].quantity}`;
+                    cell2.className = 'quantity';
+
+                    cell3.innerHTML = `${replenishments[i].restockStatus}`;
+                    cell3.className = 'statusBtn';
+
+                    if (replenishments[i].restockStatus == 1) {
+                        cell3.innerHTML = `<button type="button" class="btn btn-warning btnRegister">開始</button>`;
+                    } else if (replenishments[i].restockStatus == 2) {
+                        cell3.innerHTML = `<button type="button" class="btn btn-success btnRegister btnEnd">完了</button>`;
                     }
 
-                    cell1.innerHTML = `${supplys[i].machineNum}`;
-                    cell1.className = 'machine-number';
-
-                    cell2.innerHTML = `${supplys[i].address}`;
-                    cell2.className = 'address';
-
-                    cell3.innerHTML = `${supplys[i].partsNum}`;
-                    cell3.className = 'partsNum';
-
-                    cell4.innerHTML = `${supplys[i].requiredQuantity}`;
-                    cell4.className = 'boxCount';
-
-                    cell5.innerHTML = subResult;
-                    cell5.setAttribute("data-time", dataTime); // 表示時間
-                    cell5.setAttribute("data-countdown", supplys[i].countDownTime);
-                    cell5.setAttribute("data-request-datetime", supplys[i].correctedRequestDatetime);
-                    cell5.className = remainingMs > 0 ? 'timeCount' : 'timeCount redflag';
-
-                    const machine = supplys[i].machineNum; //　機番
-                    const emptyBoxId = supplys[i].emptyBoxId;　//空箱供給依頼id
-                    const isPartsOnlyOder = supplys[i].isPartsOnlyOder;　//空箱供給依頼id
-                    const renderKey = isPartsOnlyOder == 1
-                        ? `partsOnly_${supplys[i].partsSupplyRequestId}` // 各レコードに1つのキー
-                        : `${machine}_${emptyBoxId}`;　//　キー
-                    const hasReady = supplys[i].readyCount > 0;　//既に登録
-                    let isReadyOrder = supplys[i].isReadyOrder;　// 準備フラグ
-                    const isLastToComplete = (supplys[i].readyCount + 1) == supplys[i].totalCount;　//　完了前の最後の項目
-                    const isNowExactlyFull = supplys[i].readyCount == supplys[i].totalCount;
-
-                    if (!isReadyOrder && isLastToComplete && !renderedTotalButtons.has(renderKey)) {
-                        //　全登録の最終行
-                        cell6.innerHTML = `<button type="button" class="btn btn-primary btnTotalRegister">${supplys[i].displayNumber}</button>`;
-                        cell7.innerHTML = `<button type="button" class="btn btn-secondary btnClose"><i class="fa-solid fa-xmark"></i></button>`;
-                        renderedTotalButtons.add(renderKey); // この機番に集約ボタンが表示済みであることをマーク
-                    }
-                    else if (isReadyOrder && isNowExactlyFull && !renderedTotalButtons.has(renderKey)) {
-                        cell6.innerHTML = `<button type="button" class="btn btn-primary btnTotalRegister">${supplys[i].displayNumber}</button>`;
-                        cell7.innerHTML = `<button type="button" class="btn btn-secondary btnClose"><i class="fa-solid fa-xmark"></i></button>`;
-                        renderedTotalButtons.add(renderKey); // この機番に集約ボタンが表示済みであることをマーク
-
-                        // 自動的登録
-                        autoRegister(supplys[i])
-                    }
-                    else if (hasReady && isReadyOrder) {
-                        // 登録済み』ボタン表示＋Closeボタン無効化
-                        cell6.innerHTML = `<button type="button" class="btn btn-primary btnRegistered">${supplys[i].displayNumber}</button>`;
-                        cell7.innerHTML = `<button type="button" class="btn btn-secondary btnCloseDisable"><i class="fa-solid fa-xmark"></i></button>`;
-                    }
-                    else {
-                        // 未準備
-                        cell6.innerHTML = `<button type="button" class="btn btn-primary btnRegister">${supplys[i].displayNumber}</button>`;
-                        cell7.innerHTML = `<button type="button" class="btn btn-secondary btnClose"><i class="fa-solid fa-xmark"></i></button>`;
-                    }
-
-                    // ================================
-                    cell8.innerHTML = `${supplys[i].partsSupplyRequestId}`;
-                    cell8.className = 'supplyId';
-
-                    cell9.innerHTML = `${supplys[i].isPartsOnlyOder}`;
-                    cell9.className = 'isPartsOnlyOder';
-
-                    cell10.innerHTML = `${supplys[i].emptyBoxId}`;
-                    cell10.className = 'emptyBoxId';
+                    cell4.innerHTML = `<button type="button" class="btn btn-secondary btnClose"><i class="fa-solid fa-xmark"></i></button>`;
+                    cell5.innerHTML = `${replenishments[i].restockStatusId}`;
+                    cell5.className = 'restockStatusId';
                 }
+
             } else {
-                $(".supplyContent").hide();
+                $(".replenishmentContent").hide();
                 $(".noneDateMess").show();
             }
         }
 
 
-        // 各tdを繰り返し、各tdにカウントダウン関数を適用する
-        const tdElements = document.querySelectorAll('#tblSupplyLeft td.timeCount');
-        const tdElements1 = document.querySelectorAll('#tblSupplyRight td.timeCount');
-        tdElements.forEach(counttimer);
-        tdElements1.forEach(counttimer);
 
         var btnRegister = document.querySelectorAll('.btnRegister');　//　登録
         var buttonsClose = document.querySelectorAll('.btnClose');　//　欠品
-        var btnRegistered = document.querySelectorAll('.btnRegistered');　//　既に登録
-        var btnTotalRegister = document.querySelectorAll('.btnTotalRegister');　//　全件登録
 
-        btnRegister.forEach(btn => handleRegister(btn, true));　//　登録
-        btnRegistered.forEach(btn => handleRegister(btn, false));　//　既に登録
-
-        //　全件登録
-        btnTotalRegister.forEach(function (button) {
+        // ボタン押下時に確認ダイアログ表示
+        btnRegister.forEach(function (button) {
             button.addEventListener('click', function () {
                 var row = button.parentElement.parentElement;
-                var tdWithMachineNumber = row.querySelector('.machine-number');
-                var tdWithPartsNum = row.querySelector('.partsNum');
-                var tdWithIsPartsOnlyOder = row.querySelector('.isPartsOnlyOder');
-                var tdWithSupplyId = row.querySelector('.supplyId');
-                var tdWithEmptyBoxId = row.querySelector('.emptyBoxId');
+                var statusBtn = button.textContent || button.innerText;
+                var tdWithPartsNum = row.querySelector('.parts_num');
+                var tdWithQuantity = row.querySelector('.quantity');
+                var tdWithRestockStatusId = row.querySelector('.restockStatusId');
 
-                // td要素のdata-timeとidを含むテキスト値を取得する
-                var dataMachineNumber = tdWithMachineNumber.textContent;
+                // td要素のdata-timeとidを含むテキスト値を取得
+                var dataRestockStatusId = tdWithRestockStatusId.textContent;
                 var dataPartsNum = tdWithPartsNum.textContent;
-                var dataIsPartsOnlyOder = tdWithIsPartsOnlyOder.textContent;
-                var dataSupplyId = tdWithSupplyId.textContent;
-                var dataEmptyBoxId = tdWithEmptyBoxId.textContent;
+                var dataQuantity = tdWithQuantity.textContent;
 
-                Swal.fire({
-                    title: `依頼をすべて完了で登録してもよろしいですか？`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#0d6efd',
-                    cancelButtonText: 'いいえ',
-                    confirmButtonText: 'はい',
-                    allowOutsideClick: false,
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            type: 'POST',
-                            url: baseUrl + '/Parts/Complete',
-                            data: { dataSupplyId: dataSupplyId, machineNum: dataMachineNumber, workType: workType, dataIsPartsOnlyOder: dataIsPartsOnlyOder, dataEmptyBoxId: dataEmptyBoxId },
-                            success: function (response) {
-                                if (response.res != true) {
-                                    setTimeout(function () {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: `箱種 ${dataMachineNumber} 箱数 ${dataPartsNum}の<br>準備完了登録ができませんでした。<br>再度お試しください。`,
-                                            html: `<span style="color: red;">${response.res}</span>`,
-                                            confirmButtonColor: '#0d6efd',
-                                            confirmButtonText: '閉じる',
-                                            allowOutsideClick: false,
-                                        });
-                                    }, 500);
-                                }
+                // 開始ボタン押下時
+                if (statusBtn == "開始") {
+                    $.ajax({
+                        type: 'POST',
+                        url: baseUrl + '/Replenishment/UpdateForReplenishmentStart',
+                        data: { dataRestockStatusId: dataRestockStatusId, statusBtn: statusBtn },
+                        success: function (response) {
+                            if (response.res != true) {
+                                setTimeout(function () {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: `品番 ${dataPartsNum} 数量 ${dataQuantity}の<br>部品補充開始登録ができませんでした。<br>再度お試しください。`,
+                                        html: `<span style="color: red;">${response.errorMessage}</span>`,
+                                        confirmButtonColor: '#0d6efd',
+                                        confirmButtonText: '閉じる',
+                                        allowOutsideClick: false,
+                                    })
+                                }, 500);
                             }
-                        }).done(function () {
-                            setTimeout(function () {
-                                $("#overlay").fadeOut(300);
-                            }, 500);
-                        });
-                    }
-                });
+                        }
+                    }).done(function () {
+                        setTimeout(function () {
+                            $("#overlay").fadeOut(300);
+                        }, 10);
+                    });
+                }
+
+                // 終了ボタン押下時
+                if (statusBtn == "完了") {
+                    Swal.fire({
+                        title: `品番 ${dataPartsNum} 数量 ${dataQuantity}の<br>部品補充完了登録を行います。<br>よろしいですか？`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#198754',
+                        cancelButtonText: 'キャンセル',
+                        allowOutsideClick: false,
+                        confirmButtonText: '完了'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                type: 'POST',
+                                url: baseUrl + '/Replenishment/RegisterForReplenishmentComplete',
+                                data: { dataRestockStatusId: dataRestockStatusId, statusBtn: statusBtn },
+                                success: function (response) {
+                                    if (response.res != true) {
+                                        setTimeout(function () {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: `品番 ${dataPartsNum} 数量 ${dataQuantity}の<br>部品補充完了ができませんでした。<br>再度お試しください。`,
+                                                html: `<span style="color: red;">${response.errorMessage}</span>`,
+                                                confirmButtonColor: '#0d6efd',
+                                                confirmButtonText: '閉じる',
+                                                allowOutsideClick: false,
+                                            })
+                                        }, 500);
+                                    }
+                                }
+                            }).done(function () {
+                                setTimeout(function () {
+                                    $("#overlay").fadeOut(300);
+                                }, 500);
+                            });
+                        }
+                    })
+                }
             });
         });
 
-        //　欠品
+        //　取消
         buttonsClose.forEach(function (button) {
             button.addEventListener('click', function () {
                 var row = button.parentElement.parentElement;
-                var tdWithMachineNumber = row.querySelector('.machine-number');
-                var tdWithPartsNum = row.querySelector('.partsNum');
-                var tdWithIsPartsOnlyOder = row.querySelector('.isPartsOnlyOder');
-                var tdWithSupplyId = row.querySelector('.supplyId');
-                var tdWithEmptyBoxId = row.querySelector('.emptyBoxId');
+                var statusBtn = button.textContent || button.innerText;
+                var tdWithPartsNum = row.querySelector('.parts_num');
+                var tdWithQuantity = row.querySelector('.quantity');
+                var tdWithRestockStatusId = row.querySelector('.restockStatusId');
 
-                // td要素のdata-timeとidを含むテキスト値を取得する
-                var dataMachineNumber = tdWithMachineNumber.textContent;
+                // td要素のdata-timeとidを含むテキスト値を取得
+                var dataRestockStatusId = tdWithRestockStatusId.textContent;
                 var dataPartsNum = tdWithPartsNum.textContent;
-                var dataIsPartsOnlyOder = tdWithIsPartsOnlyOder.textContent;
-                var dataSupplyId = tdWithSupplyId.textContent;
-                var dataEmptyBoxId = tdWithEmptyBoxId.textContent;
+                var dataQuantity = tdWithQuantity.textContent;
 
-                Swal.fire({
-                    title: '欠品の登録には職制のパスワードが必要です。',
-                    input: 'password',
-                    inputPlaceholder: 'パスワードを入力してください',
-                    showCancelButton: true,
-                    icon: 'warning',
-                    cancelButtonText: 'キャンセル',
-                    confirmButtonText: '欠品登録',
-                    allowOutsideClick: false,
-                    preConfirm: (value) => {
-                        if (!value) {
-                            Swal.showValidationMessage('パスワードを空にすることはできません');
-                            return false;
-                        }
-                        return value;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            type: 'POST',
-                            url: baseUrl + '/Parts/RegisterOutOfStock',
-                            data: { dataMachineNumber: dataMachineNumber, password: result.value, workType: workType, dataIsPartsOnlyOder: dataIsPartsOnlyOder, dataSupplyId: dataSupplyId, dataEmptyBoxId: dataEmptyBoxId },
-                            success: function (response) {
-                                if (response.res != true) {
-                                    setTimeout(function () {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: `機番 ${dataMachineNumber} 所番地 ${dataPartsNum}の<br>の欠品登録ができませんでした。<br>再度お試しください。`,
-                                            html: `<span style="color: red;">${response.errorMessage}</span>`,
-                                            confirmButtonColor: '#0d6efd',
-                                            confirmButtonText: '閉じる',
-                                            allowOutsideClick: false,
-                                        })
-                                    }, 500);
-                                }
-                            }
-                        }).done(function () {
+                $.ajax({
+                    type: 'POST',
+                    url: baseUrl + '/Replenishment/RegisterForReplenishmentCancel',
+                    data: { dataRestockStatusId: dataRestockStatusId, statusBtn: statusBtn },
+                    success: function (response) {
+                        if (response.res != true) {
                             setTimeout(function () {
-                                $("#overlay").fadeOut(300);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: `箱種 ${dataPartsNum} 箱数 ${dataQuantity}の<br>部品補充の取消ができませんでした。<br>再度お試しください。`,
+                                    html: `<span style="color: red;">${response.errorMessage}</span>`,
+                                    confirmButtonColor: '#0d6efd',
+                                    confirmButtonText: '閉じる',
+                                    allowOutsideClick: false,
+                                })
                             }, 500);
-                        });
+                        }
                     }
-                })
+                }).done(function () {
+                    setTimeout(function () {
+                        $("#overlay").fadeOut(300);
+                    }, 10);
+                });
             });
         });
     }
 }
+
+
 
 // 自動的登録
 function autoRegister(item) {
@@ -425,7 +339,7 @@ function handleRegister(button, isRegister) {
     button.addEventListener('click', function () {
         var row = button.parentElement.parentElement;
         var dataSupplyId = row.querySelector('.supplyId').textContent;
-        var dataMachineNumber = row.querySelector('.machine-number').textContent;
+        var dataMachineNumber = row.querySelector('.parts_num').textContent;
         var dataPartsNum = row.querySelector('.partsNum').textContent;
 
         $.ajax({
@@ -456,24 +370,24 @@ function handleRegister(button, isRegister) {
 // ----------------------------------------------------------------------//
 
 
-// -----------------------------------運搬画面-----------------------------------//
+// -----------------------------------在庫調整画面-----------------------------------//
 // SignalRを使用して接続を初期化する
-const isTransportationPage = document.getElementById("transportation-page");
-if (isTransportationPage) {
-    var connectionTransport = new signalR.HubConnectionBuilder().withUrl("transportationHub").build();
+const isInventoryInformationPage = document.getElementById("inventory-information-page");
+if (isInventoryInformationPage) {
+    var connectionInventoryInformation = new signalR.HubConnectionBuilder().withUrl("inventoryAdjustmentHub").build();
 
     $(function () {
-        connectionTransport.start().then(function () {
-            InvokeTransports();
+        connectionInventoryInformation.start().then(function () {
+            InvokeinventoryInformations();
         })
     });
 
     // 短い遅延後に再接続を試みる
     var closeConnectTransportCount = 0;
-    connectionTransport.onclose(function (error) {
+    connectionInventoryInformation.onclose(function (error) {
         setTimeout(function () {
-            connectionTransport.start().then(function () {
-                InvokeTransports();
+            connectionInventoryInformation.start().then(function () {
+                InvokeinventoryInformations();
             })
             closeConnectTransportCount += 1;
             console.log("Error - onclose 再接続" + closeConnectTransportCount + "回目");
@@ -486,137 +400,81 @@ if (isTransportationPage) {
     // ページを離れた時やリロードしたタイミングで接続を止める
     window.addEventListener('unload', function () {
         console.log("addEventListener - unload");
-        connectionTransport.stop();
+        connectionInventoryInformation.stop();
     });
 
     // ハブのメソッドを呼び出す
-    function InvokeTransports() {
-        connectionTransport.invoke("SendTransportations").catch(function (error) {
+    function InvokeinventoryInformations() {
+        connectionInventoryInformation.invoke("SendInventoryInformations").catch(function (error) {
             // Controllerに接続できない場合はエラー
             console.log("Error - invoke catch");
-            $(".connectionTransportError").text(error);
-            $(".connectionTransportError").show();
+            $(".connectionInventoryInformationError").text(error);
+            $(".connectionInventoryInformationError").show();
         });
     }
 
     // エラー発生時
-    connectionTransport.on("Error", (error) => {
+    connectionInventoryInformation.on("Error", (error) => {
         console.log("Error - on");
-        $(".connectionTransportError").text(error);
-        $(".connectionTransportError").show();
+        $(".connectionInventoryInformationError").text(error);
+        $(".connectionInventoryInformationError").show();
     });
 
     // グリッドに依頼をバインドする
-    connectionTransport.on("ReceivedTransportations", function (products) {
-        BindTransportsToGrid(products);
+    connectionInventoryInformation.on("ReceivedInventoryInformations", function (products) {
+        BindInventoryInformationsToGrid(products);
     });
 }
 
 // グリッドに依頼をバインド
-function BindTransportsToGrid(transports) {
-    $('#tblTransportLeft tbody').empty();
-    $('#tblTransportRight tbody').empty();
+function BindInventoryInformationsToGrid(inventoryInformations) {
+    $('#tblInventoryInformation tbody').empty();
 
-    var tableLeftDom = document.getElementById('tblTransportLeft');
-    var tableRightDom = document.getElementById('tblTransportRight');
+    var tableDom = document.getElementById('tblInventoryInformation');
 
-    if (tableLeftDom !== null) {
-        var table = tableLeftDom.getElementsByTagName('tbody')[0];
-        var table1 = tableRightDom.getElementsByTagName('tbody')[0];
+    if (tableDom !== null) {
+        var table = tableDom.getElementsByTagName('tbody')[0];
 
-        // 左のテーブル取得
-        var supplys1 = transports.slice(0, 6);
-        createTable(supplys1, table);
-
-        // 右のテーブル取得
-        var supplysTmp = transports.length - supplys1.length;
-        if (supplysTmp > 0) {
-            var supplys2 = transports.slice(6, 12);
-            createTable(supplys2, table1);
-        }
+        createTable(inventoryInformations, table);
 
         // テーブルを作成
-        function createTable(transports, table) {
-            if (transports.length > 0) {
-                $(".transportContent").show();
+        function createTable(inventoryInformations, table) {
+            if (inventoryInformations.length > 0) {
+                $(".inventoryInformationContent").show();
                 $(".noneDateMess").hide();
 
-                for (let i = 0; i < transports.length; i++) {
+                for (let i = 0; i < inventoryInformations.length; i++) {
                     var row = table.insertRow();
                     var cell1 = row.insertCell(0);
                     var cell2 = row.insertCell(1);
                     var cell3 = row.insertCell(2);
                     var cell4 = row.insertCell(3);
                     var cell5 = row.insertCell(4);
-                    var cell6 = row.insertCell(5);
-                    var cell7 = row.insertCell(6);
 
-                    // 現在日時
-                    var today = new Date();
+                    cell1.innerHTML = `${inventoryInformations[i].inventoryId}`;
+                    cell1.className = 'inventoryId';
 
-                    // 依頼時間
-                    var resDateTime = new Date(transports[i].correctedRequestDatetime);
-                    var elapsedMs = today - resDateTime;　// 残り時間
-                    var countdownMs = transports[i].countDownTime * 60000;　//カウント時間
-                    var remainingMs = countdownMs - elapsedMs;　// 経過時間
-                    var dataTime = elapsedMs;
-                    var subResult;
+                    cell2.innerHTML = `${inventoryInformations[i].partsNum}`;
+                    cell2.className = 'partsNum';
 
-                    if (elapsedMs >= 60 * 60000) { // 1時間経過した場合、表示を「59:59」で固定
-                        subResult = "59:59";
-                    } else if (remainingMs > 0) { // カウントダウン中（残り時間がまだある）
-                        const minutes = Math.floor(remainingMs / 60000);
-                        const seconds = Math.floor((remainingMs % 60000) / 1000);
-                        subResult = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    } else { // カウントアップ中（カウントダウン終了後の経過時間を表示）
-                        const totalMinutes = transports[i].countDownTime + Math.floor((elapsedMs - countdownMs) / 60000);
-                        const seconds = Math.floor((elapsedMs % 60000) / 1000);
-                        const displayMinutes = Math.min(totalMinutes, 59);
-                        subResult = `${displayMinutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    }
+                    const inventoryNum = inventoryInformations[i].inventoryNum;
 
-                    cell1.innerHTML = `${transports[i].machineNum}`;
-                    cell1.className = 'machineNum';
+                    cell3.innerHTML = `${inventoryNum}`;
+                    cell3.className = inventoryNum < 0 ? 'inventoryNum text-danger' : 'inventoryNum';
 
-                    cell2.innerHTML = `${transports[i].address}`;
-                    cell2.className = 'address';
-
-                    cell3.innerHTML = `${transports[i].partsNum}`;
-                    cell3.className = 'partsNum';
-
-                    cell4.innerHTML = `${transports[i].requiredQuantity}`;
-                    cell4.className = 'boxCount';
-
-                    cell5.innerHTML = subResult;
-                    cell5.setAttribute("data-time", dataTime); // 表示時間
-                    cell5.setAttribute("data-countdown", transports[i].countDownTime);
-                    cell5.setAttribute("data-request-datetime", transports[i].correctedRequestDatetime);
-                    cell5.className = remainingMs > 0 ? 'timeCount' : 'timeCount redflag';
+                    cell4.className = 'inventoryNumInput';
+                    cell4.innerHTML = `<input type="number" name="inventoryNum" class="form-control inventoryNumInput" min="0" value="" onkeydown="return event.key !== '.' && event.key !== ','">`;
 
                     // statusBtn
-                    cell6.className = 'statusBtn';
-                    if (transports[i].transportationStartDatetime == null && transports[i].transportationEndDatetime == null) {
-                        cell6.innerHTML = `<button type="button" class="btn btn-warning btnRegister">開始</button>`;
-                    } else if (transports[i].transportationStartDatetime != null && transports[i].transportationEndDatetime == null) {
-                        cell6.innerHTML = `<button type="button" class="btn btn-success btnRegister btnEnd">終了</button>`;
-                    }
-
-                    // transportId
-                    cell7.innerHTML = `${transports[i].partsSupplyRequestId}`;
-                    cell7.className = 'transportId';
+                    cell5.className = 'statusBtn';
+                    cell5.innerHTML = `<button type="button" class="btn btn-success btnRegister">登録</button>`;
+                 
                 }
             } else {
-                $(".transportContent").hide();
+                $(".inventoryInformationContent").hide();
                 $(".noneDateMess").show();
             }
         }
-
-
-        // 各tdを繰り返し、各tdにカウントダウン関数を適用する
-        const tdElements = document.querySelectorAll('#tblTransportLeft td.timeCount');
-        const tdElements1 = document.querySelectorAll('#tblTransportRight td.timeCount');
-        tdElements.forEach(counttimer);
-        tdElements1.forEach(counttimer);
 
         var buttons = document.querySelectorAll('.btnRegister');
 
@@ -624,89 +482,55 @@ function BindTransportsToGrid(transports) {
         buttons.forEach(function (button) {
             button.addEventListener('click', function () {
                 var row = button.parentElement.parentElement;
-                var statusBtn = button.textContent || button.innerText;
-                var tdWithSupplyId = row.querySelector('.transportId');
-                var tdWithMachineNum = row.querySelector('.machineNum');
-                var tdWithBoxCount = row.querySelector('.boxCount');
+                var tdWithInventoryId = row.querySelector('.inventoryId');
+                var tdWithPartsNum = row.querySelector('.partsNum');
+                var tdWithInventoryNumInput = row.querySelector('input.inventoryNumInput');
 
                 // td要素のdata-timeとidを含むテキスト値を取得
-                var dataSupplyId = tdWithSupplyId.textContent;
-                var dataMachineNum = tdWithMachineNum.textContent;
-                var dataBoxCount = tdWithBoxCount.textContent;
+                var dataInventoryId = tdWithInventoryId.textContent;
+                var dataPartsNum = tdWithPartsNum.textContent;
+                var dataInventoryNumInput = tdWithInventoryNumInput.value;
 
-                // 開始ボタン押下時
-                if (statusBtn == "開始") {
-                    $.ajax({
-                        type: 'POST',
-                        url: baseUrl + '/Transportation/Complete',
-                        data: { dataSupplyId: dataSupplyId, statusBtn: statusBtn},
-                        success: function (response) {
-                            if (response.res == true) {
-                                button.innerText = "終了";
-                                button.classList.remove('btn-warning');
-                                button.classList.add('btn-success');
-                            } else {
-                                setTimeout(function () {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: `機番 ${dataMachineNum} 箱数 ${dataBoxCount}の<br>運搬開始登録ができませんでした。<br>再度お試しください。`,
-                                        html: `<span style="color: red;">${response.res}</span>`,
-                                        confirmButtonColor: '#0d6efd',
-                                        confirmButtonText: '閉じる',
-                                        allowOutsideClick: false,
-                                    })
-                                }, 500);
-                            }
+                // 完了ボタン押下時
+                $.ajax({
+                    type: 'POST',
+                    url: baseUrl + '/InventoryAdjustment/Register',
+                    data: { dataInventoryId: dataInventoryId, dataInventoryNumInput: dataInventoryNumInput},
+                    success: function (response) {
+                        if (response.res != true) {
+                            setTimeout(function () {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: `ID ${dataInventoryId}　品番 ${dataPartsNum} 追加数 ${dataPartsNum}の<br>在庫調整ができませんでした。<br>再度お試しください。`,
+                                    html: `<span style="color: red;">${response.res}</span>`,
+                                    confirmButtonColor: '#0d6efd',
+                                    confirmButtonText: '閉じる',
+                                    allowOutsideClick: false,
+                                })
+                            }, 500);
                         }
-                    }).done(function () {
-                        setTimeout(function () {
-                            $("#overlay").fadeOut(300);
-                        }, 10);
-                    });
-                }
-
-                // 終了ボタン押下時
-                if (statusBtn == "終了") {
-                    Swal.fire({
-                        title: `機番 ${dataMachineNum} 箱数 ${dataBoxCount}の<br>運搬終了登録を行います。<br>よろしいですか？`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#198754',
-                        cancelButtonText: 'キャンセル',
-                        allowOutsideClick: false,
-                        confirmButtonText: '終了'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            $.ajax({
-                                type: 'POST',
-                                url: baseUrl + '/Transportation/Complete',
-                                data: { dataSupplyId: dataSupplyId, statusBtn: statusBtn},
-                                success: function (response) {
-                                    if (response.res != true) {
-                                        setTimeout(function () {
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: `機番 ${dataMachineNum} 箱数 ${dataBoxCount}の<br>運搬終了登録ができませんでした。<br>再度お試しください。`,
-                                                html: `<span style="color: red;">${response.res}</span>`,
-                                                confirmButtonColor: '#0d6efd',
-                                                confirmButtonText: '閉じる',
-                                                allowOutsideClick: false,
-                                            })
-                                        }, 500);
-                                    }
-                                }
-                            }).done(function () {
-                                setTimeout(function () {
-                                    $("#overlay").fadeOut(300);
-                                }, 500);
-                            });
-                        }
-                    })
-                }
+                    }
+                }).done(function () {
+                    setTimeout(function () {
+                        $("#overlay").fadeOut(300);
+                    }, 10);
+                });
             });
         });
     }
 }
+
+// マイナス数場合、テキストが赤くになる
+$(document).on("input", ".inventoryNumInput", function () {
+    const value = Number($(this).val());
+
+    if (value < 0) {
+        $(this).css("color", "red");
+    } else {
+        $(this).css("color", "");
+    }
+});
+
 // ----------------------------------------------------------------------//
 
 
@@ -884,104 +708,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 // ----------------------------------------------------------------------//
-
-
-// -----------------------------------稼働状況-----------------------------------//
-// SignalRを使用して接続を初期化する
-const isMachinePage = document.getElementById("machine-page");
-if (isMachinePage) {
-    var connectionMachine = new signalR.HubConnectionBuilder().withUrl("machineHub").build();
-
-    $(function () {
-        connectionMachine.start().then(function () {
-            InvokeMachines();
-        })
-    });
-
-    // ページを離れた時やリロードしたタイミングで接続を止める
-    window.addEventListener('unload', function () {
-        console.log("addEventListener - unload");
-        connectionMachine.stop();
-    });
-
-    // ハブのメソッドを呼び出す
-    function InvokeMachines() {
-        //  URLからDivisionを取得
-        connectionMachine.invoke("SendMachineStatusList").catch(function (error) {
-            // Controllerに接続できない場合はエラー
-            console.log("Error - invoke catch");
-            $(".connectionTransportError").text(error);
-            $(".connectionTransportError").show();
-        });
-    }
-
-    // エラー発生時
-    connectionMachine.on("Error", (error) => {
-        console.log("Error - on");
-        $(".connectionTransportError").text(error);
-        $(".connectionTransportError").show();
-    });
-
-    // グリッドに依頼をバインドする
-    connectionMachine.on("ReceivedMachineStatusList", function (machines) {
-        const queryParam = new URLSearchParams(window.location.search).get("zone");
-        var filterMachines = machines.filter((item) => item.zone == queryParam);
-        BindMachinesToGrid(filterMachines);
-    });
-}
-
-// グリッドに依頼をバインド
-function BindMachinesToGrid(machines) {
-    $('#machineTable tbody').empty();
-
-    var machineDom = document.getElementById('machineTable');
-
-    if (machineDom !== null) {
-        var table = machineDom.getElementsByTagName('tbody')[0];
-
-        // テーブル取得
-        createTable(machines, table);
-
-        // テーブルを作成
-        function createTable(machines, table) {
-            if (machines.length > 0) {
-                $(".machine-table-content").show();
-                $(".noneDateMess").hide();
-
-                for (let i = 0; i < machines.length; i++) {
-                    var row = table.insertRow();
-                    var cell1 = row.insertCell(0);
-                    var cell2 = row.insertCell(1);
-                    var cell3 = row.insertCell(2);
-
-                    cell1.innerHTML = `${machines[i].machineNum}`;
-                    cell2.innerHTML = `${machines[i].status ? '稼働中' : '停止'}`;
-                    cell3.innerHTML = !isDotNetMinDate(machines[i].endTime) ? `${formatDate(machines[i].endTime)}` : "-";
-                    if (machines[i].status) {
-                        cell2.style.color = 'orange';
-                    } else {
-                        cell2.style.color = 'green';
-                    }
-                }
-            } else {
-                $(".machine-table-content").hide();
-                $(".noneDateMess").show();
-            }
-        }
-        function isDotNetMinDate(value) {
-            return value === "0001-01-01T00:00:00" ||
-                value.startsWith("0001-01-01");
-        }
-    }
-}
-function formatDate(dateInput) {
-    const date = new Date(dateInput);
-    if (isNaN(date)) return "";
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months start at 0
-    const dd = String(date.getDate()).padStart(2, '0');
-    const hh = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-
-    return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
-}

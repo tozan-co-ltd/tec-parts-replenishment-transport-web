@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    @*<link rel="stylesheet" href="~/tec_parts_supply_transport_web.styles.css" asp-append-version="true" />*@
+    @*<link rel="stylesheet" href="~/tec_parts_replenishment_transpor_web.styles.css" asp-append-version="true" />*@
 </head>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -26,7 +26,10 @@
                     if (@ViewData["Title"] != "トップ")
                     {
                         <div class="d-flex justify-content-center align-items-center header-title h2">@ViewData["Title"]</div>
-                        <a class="navbar-brand home-icon" asp-area="" asp-controller="Top" asp-action="Index"><i class="fa fa-fw fa-home"></i></a>
+                        <div class="d-flex justify-content-end align-items-center">
+                            <a class="navbar-brand inventory-adjustment" asp-area="" asp-controller="InventoryAdjustment" asp-action="Index">在庫調整</a>
+                            <a class="navbar-brand home-icon" asp-area="" asp-controller="Top" asp-action="Index"><i class="fa fa-fw fa-home"></i></a>
+                        </div>
                     }
                     else
                     {

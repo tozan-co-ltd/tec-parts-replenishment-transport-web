@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace tec_parts_supply_transport_web.Commons
+namespace tec_parts_replenishment_transpor_web.Commons
 {
     public static class Const
     {
@@ -13,7 +13,14 @@ namespace tec_parts_supply_transport_web.Commons
 
         public const string C_WORK_LIFT = "Lift"; 
 
-        public const string C_WORK_TAGNOVA= "TagNova"; 
+        public const string C_WORK_TAGNOVA= "TagNova";
 
+        public static class Status
+        {
+            public const int C_PENDING_STATUS = 1;
+            public const int C_START_STATUS = 2;
+            public const int C_COMPLETE_STATUS = 3;
+            public const int C_CANCEL_STATUS = 4;
+        }
     }
 }

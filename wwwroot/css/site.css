@@ -16,8 +16,8 @@ body {
     overflow-x: hidden;
 }
 
-.cl-EF8A45 {
-    color: #EF8A45;
+.cl-70AD47 {
+    color: #70AD47;
 }
 
 .version-info {
@@ -101,7 +101,37 @@ body {
     margin-bottom: 2rem !important;
 }
 
+.inventoryInformationContent .btnRegister{
+    width: 9vw;
+    font-size: 28px;
+}
 
+.inventoryNumInput {
+    margin: 0 auto;
+    height: 9vh;
+    width: 20vw;
+    background-color: transparent;
+    color: #fff;
+    font-size: 28px;
+    text-align: center;
+}
+
+    .inventoryNumInput:focus {
+        background-color: transparent;
+        color: #fff;
+    }
+
+.btnBack {
+    margin: 0px 0px 20px 0;
+    background-color: rgb(91, 155, 213);
+    width: 120px;
+    font-size: 20px;
+    color: #fff;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
 
 .disabled {
     color: gray;
@@ -114,36 +144,6 @@ body {
     pointer-events: none;
 }
 
-.preparation-selection-page {
-    margin: 15px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 590px;
-    border-radius: 15px;
-    text-align: center;
-}
-
-    .preparation-selection-page a {
-        border: 1px solid transparent;
-        transition: 0.5s;
-        font-weight: bold;
-    }
-
-        .preparation-selection-page a:hover {
-            background: #fff;
-            color: #EF8A45;
-            border: 1px solid #EF8A45;
-        }
-
-
-.preparation-selection a{
-    background-color: #EF8A45;
-    color: #fff;
-    padding: 20px 0;
-    border-radius: 10px;
-}
 
 .option-list .option-item {
     width: 250px;
@@ -220,11 +220,6 @@ a {
 
 .registerTh {
     width: 70px;
-}
-
-.prepare,
-.transport {
-    overflow: hidden;
 }
 
 .zoom {
@@ -365,25 +360,15 @@ h3 {
     margin: 3px;
 }
 
-.transportId {
+.restockStatusId {
     display: none;
 }
 
-.supplyId, .isPartsOnlyOder, .emptyBoxId {
-    display: none;
-}
 
 .noneDateMess, .connectionTransportError, .connectionSupplyError {
     margin: 20px 0;
 }
 
-.supplyContent .btnCompletion,
-.supplyContent .btnRegistered,
-.supplyContent .btnTotalRegister {
-    margin-right: 5px;
-    font-size: 18px;
-    padding: 0;
-}
 
 .btn-warning {
     color: #fff;
@@ -393,17 +378,9 @@ h3 {
 .btnTotalRegister,
 .btnRegistered,
 .btnRegister {
-    width: 60px;
+    width: 70px;
     height: 70px;
     font-size: 20px;
-}
-
-#parts-page .btnRegistered {
-    background-color: #A5A5A5;
-}
-
-#parts-page .btnTotalRegister {
-    background-color: #70AD47;
 }
 
 .statusBtn .btn {
@@ -429,10 +406,6 @@ h3 {
     height: 100%;
     display: none;
     background: rgba(0, 0, 0, 0.3);
-}
-
-.transportContent {
-    max-width: 100%;
 }
 
 .cv-spinner {
@@ -578,6 +551,18 @@ h3 {
     margin-right: 0;
 }
 
+.inventory-adjustment {
+    border: 1px solid;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+    .inventory-adjustment:hover {
+        background-color: #5B9BD5;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+    }
+
 i.fa-home {
     background: #c4000b;
     color: #fff;
@@ -608,12 +593,6 @@ a > i.fa-home {
     padding: 5px !important;
 }
 
-@media (min-width: 1250px) {
-    .boxType {
-        font-size: 28px !important;
-    }
-}
-
 @media (max-width: 1024px) {
     .container {
         width: 100% !important;
@@ -629,14 +608,6 @@ a > i.fa-home {
 @media (max-width: 935px) {
     table tbody {
         font-size: 30px;
-    }
-
-    .boxType {
-        font-size: 30px !important;
-    }
-
-    .transportContent {
-        display: block;
     }
 
     .col6-sp {

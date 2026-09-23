@@ -1,4 +1,4 @@
-﻿namespace tec_parts_supply_transport_web.Commons
+﻿namespace tec_parts_replenishment_transpor_web.Commons
 {
     /// <summary>
     /// 空箱供給状態の列挙型

@@ -1,11 +1,11 @@
-﻿using tec_parts_supply_transport_web.Models;
+﻿using tec_parts_replenishment_transpor_web.Models;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using Dapper;
-using tec_parts_supply_transport_web.Commons;
+using tec_parts_replenishment_transpor_web.Commons;
 
-namespace tec_parts_supply_transport_web.Repositories
+namespace tec_parts_replenishment_transpor_web.Repositories
 {
     /// <summary>
     /// エラーメッセージテーブルに関する関数

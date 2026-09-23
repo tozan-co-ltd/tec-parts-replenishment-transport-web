@@ -1,32 +1,29 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using tec_parts_supply_transport_web.Commons;
-using tec_parts_supply_transport_web.Models;
-using tec_parts_supply_transport_web.Repositories;
+using tec_parts_replenishment_transpor_web.Commons;
+using tec_parts_replenishment_transpor_web.Models;
+using tec_parts_replenishment_transpor_web.Repositories;
 
-namespace tec_parts_supply_transport_web.Hubs
+namespace tec_parts_replenishment_transpor_web.Hubs
 {
-    public class PreparationHub : Hub
+    public class ReplenishmentHub : Hub
     {
-        PreparationRepository supplyRepository;
-
-        public PreparationHub(IConfiguration configuration)
+        public ReplenishmentHub(IConfiguration configuration)
         {
             var connectionString = ConnectToSQLServer.GetSQLServerConnectionString();
-            supplyRepository = new PreparationRepository(connectionString);
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
-        public async Task SendPreparations()
+        public async Task SendReplenishments()
         {
             try
             {
                 // SQL作成
-                var sql = supplyRepository.CreateSQLToGetPreparations();
-                List<PreparationModel> listSupplys = supplyRepository.GetListSupplys(sql);
+                var sql = ReplenishmentsRepository.CreateSQLToGetReplenishments();
+                List<ReplenishmentsModel> listReplenishments = ReplenishmentsRepository.GetListReplenishments(sql);
                 if (Clients != null)
-                    await Clients.All.SendAsync("ReceivedSupplys", listSupplys);
+                    await Clients.All.SendAsync("ReceivedReplenishments", listReplenishments);
             }
             catch (Exception)
             {

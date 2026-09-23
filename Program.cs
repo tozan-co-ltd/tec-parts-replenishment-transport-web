@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using tec_parts_supply_transport_web.Commons;
-using tec_parts_supply_transport_web.Hubs;
-using tec_parts_supply_transport_web.MiddlewareExtensions;
-using tec_parts_supply_transport_web.SubscribeTableDependencies;
+using tec_parts_replenishment_transpor_web.Commons;
+using tec_parts_replenishment_transpor_web.Hubs;
+using tec_parts_replenishment_transpor_web.MiddlewareExtensions;
+using tec_parts_replenishment_transpor_web.SubscribeTableDependencies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,16 +15,11 @@ builder.Services.AddSignalR(hubOptions => {
 });
 
 // DI
-builder.Services.AddSingleton<PreparationHub>();
-builder.Services.AddSingleton<SubscribePreparationTableDependency>();
+builder.Services.AddSingleton<ReplenishmentHub>();
+builder.Services.AddSingleton<SubscribeReplenishmentTableDependency>();
+builder.Services.AddSingleton<InventoryAdjustmentHub>();
+builder.Services.AddSingleton<SubscribeInventoryAdjustmentTableDependency>();
 
-builder.Services.AddSingleton<SubscribePartsTableDependency>();
-
-builder.Services.AddSingleton<TransportationHub>();
-builder.Services.AddSingleton<SubscribeTransportationTableDependency>();
-
-builder.Services.AddSingleton<MachineHub>();
-builder.Services.AddSingleton<SubscribeMachineTableDependency>();
 
 var app = builder.Build();
 
@@ -47,10 +42,8 @@ app.UseAuthorization();
 
 app.UseWebSockets();
 
-app.MapHub<PreparationHub>("preparationHub");
-app.MapHub<PartsHub>("partsHub");
-app.MapHub<TransportationHub>("transportationHub");
-app.MapHub<MachineHub>("machineHub");
+app.MapHub<ReplenishmentHub>("replenishmentHub");
+app.MapHub<InventoryAdjustmentHub>("inventoryAdjustmentHub");
 
 app.UseEndpoints(endpoints =>
 {
@@ -59,9 +52,7 @@ app.UseEndpoints(endpoints =>
         pattern: "{controller=Top}/{action=Index}/{id?}");
 });
 
-app.UseSqlTableDependency<SubscribePreparationTableDependency>(connectionString);
-app.UseSqlTableDependency<SubscribePartsTableDependency>(connectionString);
-app.UseSqlTableDependency<SubscribeTransportationTableDependency>(connectionString);
-app.UseSqlTableDependency<SubscribeMachineTableDependency>(connectionString);
+app.UseSqlTableDependency<SubscribeReplenishmentTableDependency>(connectionString);
+app.UseSqlTableDependency<SubscribeInventoryAdjustmentTableDependency>(connectionString);
 
 app.Run();
